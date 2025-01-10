@@ -35,13 +35,6 @@
         );
     in
     {
-      packages = eachSystem (
-        { pkgs }:
-        {
-          bar = pkgs.callPackage ./nix { };
-        }
-      );
-
       devShells = eachSystem (
         { pkgs }:
         {
