@@ -10,9 +10,9 @@ And that's for learning purpose. Currently, I'm trying to implement a status bar
 
 ## FEATURES
 
-- [] status bar
-- [] launcher
-- [] maybe more
+- [ ] status bar
+- [ ] launcher
+- [ ] maybe more
 
 ## SCREENSHOTS
 
@@ -20,5 +20,5 @@ And that's for learning purpose. Currently, I'm trying to implement a status bar
 
 ## Special Thanks
 
-[zed](https://github.com/zed-industries/zed): For the rendering part and ui design.
-[Ashell](https://github.com/MalpenZibo/ashell): For status bar implementation.
+- [zed](https://github.com/zed-industries/zed): For the rendering part and ui design.
+- [Ashell](https://github.com/MalpenZibo/ashell): For status bar implementation.
