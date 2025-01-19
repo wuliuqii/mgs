@@ -8,9 +8,12 @@ mod status_bar;
 mod ui;
 mod widgets;
 
-fn main() {
+#[tokio::main]
+async fn main() {
+    tracing_subscriber::fmt::init();
+
     App::new().run(|cx: &mut AppContext| {
-        let height = px(40.0);
+        let height = px(30.0);
         let bounds = Bounds {
             origin: point(px(0.), px(0.)),
             size: size(px(1440.), height),

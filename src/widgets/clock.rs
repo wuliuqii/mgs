@@ -2,6 +2,7 @@ use std::time::Duration;
 
 use chrono::{DateTime, Local};
 use gpui::{div, rgb, AppContext, Context, Model, ParentElement, Render, Styled};
+use tracing::info;
 
 use crate::status_bar::StatusItemView;
 
@@ -18,12 +19,10 @@ impl Clock {
         let model = clock_model.downgrade();
         cx.spawn(|mut cx| async move {
             loop {
-                model
-                    .update(&mut cx, |this, cx| {
-                        *this = Local::now();
-                        cx.refresh();
-                    })
-                    .ok();
+                let _ = model.update(&mut cx, |this, cx| {
+                    *this = Local::now();
+                    cx.refresh();
+                });
 
                 cx.background_executor().timer(UPDATE_DEBOUNCE).await;
             }
@@ -36,13 +35,11 @@ impl Clock {
 
 impl Render for Clock {
     fn render(&mut self, cx: &mut gpui::ViewContext<Self>) -> impl gpui::IntoElement {
+        info!("rendering clock");
         let date = self.date.read(cx);
         div()
             .flex()
-            .border_1()
-            .border_color(rgb(0x0000ff))
-            .text_color(rgb(0xfffffff))
-            .text_lg()
+            .text_color(rgb(0x4c4f69))
             .child(date.format("%H:%M:%S").to_string())
     }
 }
