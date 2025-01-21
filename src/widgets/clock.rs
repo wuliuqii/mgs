@@ -1,47 +1,45 @@
 use std::time::Duration;
 
 use chrono::{DateTime, Local};
-use gpui::{div, rgb, AppContext, Context, Model, ParentElement, Render, Styled};
-use tracing::info;
-
-use crate::status_bar::StatusItemView;
+use gpui::{div, rgb, ParentElement, Render, Styled, View, ViewContext, VisualContext};
+use tracing::debug;
 
 const UPDATE_DEBOUNCE: Duration = Duration::from_millis(1000);
 
 pub struct Clock {
-    date: Model<DateTime<Local>>,
+    date: DateTime<Local>,
 }
 
 impl Clock {
-    pub fn new(cx: &mut AppContext) -> Self {
-        let clock_model = cx.new_model(|_| Local::now());
+    pub fn new<V: 'static>(cx: &mut ViewContext<V>) -> View<Self> {
+        cx.new_view(|cx| {
+            let clock = Self { date: Local::now() };
 
-        let model = clock_model.downgrade();
-        cx.spawn(|mut cx| async move {
-            loop {
-                let _ = model.update(&mut cx, |this, cx| {
-                    *this = Local::now();
-                    cx.refresh();
-                });
+            cx.spawn(|this, mut cx| async move {
+                loop {
+                    this.update(&mut cx, |this: &mut Clock, cx| {
+                        this.date = Local::now();
+                        cx.notify();
+                    })
+                    .ok();
 
-                cx.background_executor().timer(UPDATE_DEBOUNCE).await;
-            }
+                    cx.background_executor().timer(UPDATE_DEBOUNCE).await;
+                }
+            })
+            .detach();
+
+            clock
         })
-        .detach();
-
-        Self { date: clock_model }
     }
 }
 
 impl Render for Clock {
-    fn render(&mut self, cx: &mut gpui::ViewContext<Self>) -> impl gpui::IntoElement {
-        info!("rendering clock");
-        let date = self.date.read(cx);
+    fn render(&mut self, _cx: &mut gpui::ViewContext<Self>) -> impl gpui::IntoElement {
+        debug!("render clock");
+
         div()
             .flex()
             .text_color(rgb(0x4c4f69))
-            .child(date.format("%H:%M:%S").to_string())
+            .child(self.date.format("%H:%M:%S").to_string())
     }
 }
-
-impl StatusItemView for Clock {}

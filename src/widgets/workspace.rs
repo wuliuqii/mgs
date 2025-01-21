@@ -1,16 +1,19 @@
-use std::time::Duration;
+use std::sync::{Arc, Mutex};
 
-use gpui::{div, rgb, AppContext, Context, Model, ParentElement, Render, Styled};
+use gpui::{
+    div, rgb, EventEmitter, ParentElement, Render, Styled, View, ViewContext, VisualContext,
+};
 use hyprland::{
-    event_listener::AsyncEventListener,
+    event_listener::EventListener,
     shared::{HyprData, HyprDataActive, HyprDataVec},
 };
-use tokio::sync::mpsc;
-use tracing::info;
+use tokio::{
+    sync::broadcast::{channel, Receiver, Sender},
+    task::spawn_blocking,
+};
+use tracing::{debug, info};
 
-use crate::{status_bar::StatusItemView, ui::stack::h_flex};
-
-const UPDATE_DEBOUNCE: Duration = Duration::from_millis(100);
+use crate::ui::stack::h_flex;
 
 struct Workspace {
     pub id: i32,
@@ -75,176 +78,197 @@ fn get_workspaces() -> Vec<Workspace> {
         .collect()
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 enum WorkspaceMessage {
     Changed,
 }
 
 pub struct Workspaces {
-    workspaces: Model<Vec<Workspace>>,
+    workspaces: Vec<Workspace>,
+    tx: Sender<WorkspaceMessage>,
+    rx: Receiver<WorkspaceMessage>,
 }
 
+impl EventEmitter<WorkspaceMessage> for Workspaces {}
+
 impl Workspaces {
-    pub(crate) fn new(cx: &mut AppContext) -> Self {
-        let workspaces_model = cx.new_model(|_| get_workspaces());
+    pub fn new<V: 'static>(cx: &mut ViewContext<V>) -> View<Self> {
+        cx.new_view(|cx| {
+            let (tx, rx) = channel(16);
+            let mut instance = Self {
+                workspaces: get_workspaces(),
+                tx,
+                rx,
+            };
 
-        let (tx, mut rx) = mpsc::channel(16);
+            instance.listen_workspace_events();
+            instance.handle_workspace_event(cx);
 
-        let model = workspaces_model.downgrade();
-
-        cx.spawn(|mut cx| async move {
-            let mut event_listener = AsyncEventListener::new();
-            loop {
-                {
-                    let tx = tx.clone();
-
-                    event_listener.add_workspace_changed_handler({
-                        move |e| {
-                            info!("workspace change: {:?}", e);
-                            let tx = tx.clone();
-                            Box::pin(async move {
-                                tx.send(WorkspaceMessage::Changed).await.unwrap();
-                            })
-                        }
-                    });
-                }
-
-                {
-                    let tx = tx.clone();
-
-                    event_listener.add_workspace_added_handler({
-                        move |e| {
-                            info!("workspace add: {:?}", e);
-                            let tx = tx.clone();
-                            Box::pin(async move {
-                                tx.send(WorkspaceMessage::Changed).await.unwrap();
-                            })
-                        }
-                    });
-                }
-
-                {
-                    let tx = tx.clone();
-
-                    event_listener.add_workspace_deleted_handler({
-                        move |e| {
-                            info!("workspace delete: {:?}", e);
-                            let tx = tx.clone();
-                            Box::pin(async move {
-                                tx.send(WorkspaceMessage::Changed).await.unwrap();
-                            })
-                        }
-                    });
-                }
-
-                {
-                    let tx = tx.clone();
-
-                    event_listener.add_workspace_moved_handler({
-                        move |e| {
-                            info!("workspace moved: {:?}", e);
-                            let tx = tx.clone();
-                            Box::pin(async move {
-                                tx.send(WorkspaceMessage::Changed).await.unwrap();
-                            })
-                        }
-                    });
-                }
-
-                {
-                    let tx = tx.clone();
-
-                    event_listener.add_changed_special_handler({
-                        move |e| {
-                            info!("special workspace changed: {:?}", e);
-                            let tx = tx.clone();
-                            Box::pin(async move {
-                                tx.send(WorkspaceMessage::Changed).await.unwrap();
-                            })
-                        }
-                    });
-                }
-
-                {
-                    let tx = tx.clone();
-
-                    event_listener.add_special_removed_handler({
-                        move |e| {
-                            info!("special workspace removed: {:?}", e);
-                            let tx = tx.clone();
-                            Box::pin(async move {
-                                tx.send(WorkspaceMessage::Changed).await.unwrap();
-                            })
-                        }
-                    });
-                }
-
-                {
-                    let tx = tx.clone();
-
-                    event_listener.add_active_monitor_changed_handler({
-                        move |e| {
-                            info!("active monitor changed: {:?}", e);
-                            let tx = tx.clone();
-                            Box::pin(async move {
-                                tx.send(WorkspaceMessage::Changed).await.unwrap();
-                            })
-                        }
-                    });
-                }
-
-                event_listener.start_listener_async().await.unwrap();
-                cx.background_executor().timer(UPDATE_DEBOUNCE).await;
-            }
+            instance
         })
-        .detach();
+    }
 
-        cx.spawn(|mut cx| async move {
-            while let Some(msg) = rx.recv().await {
+    fn listen_workspace_events(&self) {
+        info!("Starting Hyprland event listener");
+
+        let tx = self.tx.clone();
+        spawn_blocking(move || {
+            let mut event_listener = EventListener::new();
+            let lock = Arc::new(Mutex::new(()));
+
+            {
+                let tx = tx.clone();
+                let lock = lock.clone();
+
+                event_listener.add_workspace_changed_handler({
+                    move |e| {
+                        let _lock = lock.lock().unwrap();
+                        debug!("workspace change: {:?}", e);
+
+                        tx.send(WorkspaceMessage::Changed)
+                            .expect("failed to send message");
+                    }
+                });
+            }
+
+            {
+                let tx = tx.clone();
+                let lock = lock.clone();
+
+                event_listener.add_workspace_added_handler({
+                    move |e| {
+                        let _lock = lock.lock().unwrap();
+                        debug!("workspace add: {:?}", e);
+
+                        tx.send(WorkspaceMessage::Changed)
+                            .expect("failed to send message");
+                    }
+                });
+            }
+
+            {
+                let tx = tx.clone();
+                let lock = lock.clone();
+
+                event_listener.add_workspace_moved_handler({
+                    move |e| {
+                        let _lock = lock.lock().unwrap();
+                        debug!("workspace delete: {:?}", e);
+
+                        tx.send(WorkspaceMessage::Changed)
+                            .expect("failed to send message");
+                    }
+                });
+            }
+
+            {
+                let tx = tx.clone();
+                let lock = lock.clone();
+
+                event_listener.add_workspace_moved_handler({
+                    move |e| {
+                        let _lock = lock.lock().unwrap();
+                        debug!("workspace moved: {:?}", e);
+
+                        tx.send(WorkspaceMessage::Changed)
+                            .expect("failed to send message");
+                    }
+                });
+            }
+
+            {
+                let tx = tx.clone();
+                let lock = lock.clone();
+
+                event_listener.add_changed_special_handler({
+                    move |e| {
+                        let _lock = lock.lock().unwrap();
+                        debug!("special workspace changed: {:?}", e);
+
+                        tx.send(WorkspaceMessage::Changed)
+                            .expect("failed to send message");
+                    }
+                });
+            }
+
+            {
+                let tx = tx.clone();
+                let lock = lock.clone();
+
+                event_listener.add_special_removed_handler({
+                    move |e| {
+                        let _lock = lock.lock().unwrap();
+                        debug!("special workspace removed: {:?}", e);
+
+                        tx.send(WorkspaceMessage::Changed)
+                            .expect("failed to send message");
+                    }
+                });
+            }
+
+            {
+                let tx = tx.clone();
+                let lock = lock.clone();
+
+                event_listener.add_active_monitor_changed_handler({
+                    move |e| {
+                        let _lock = lock.lock().unwrap();
+                        debug!("active monitor changed: {:?}", e);
+
+                        tx.send(WorkspaceMessage::Changed)
+                            .expect("failed to send message");
+                    }
+                });
+            }
+
+            event_listener
+                .start_listener()
+                .expect("failed to start listener");
+        });
+    }
+
+    fn handle_workspace_event(&mut self, cx: &mut ViewContext<Self>) {
+        let mut rx = self.tx.subscribe();
+        cx.spawn(|this, mut cx| async move {
+            while let Ok(msg) = rx.recv().await {
+                debug!("workspace event: {:?}", msg);
                 match msg {
                     WorkspaceMessage::Changed => {
-                        let _ = model.update(&mut cx, |this, cx| {
-                            *this = get_workspaces();
-                            // cx.refresh();
-                        });
+                        this.update(&mut cx, |this: &mut Workspaces, cx| {
+                            this.workspaces = get_workspaces();
+                            cx.notify();
+                        })
+                        .ok();
                     }
                 }
             }
         })
         .detach();
-
-        Self {
-            workspaces: workspaces_model,
-        }
     }
 }
 
 impl Render for Workspaces {
-    fn render(&mut self, cx: &mut gpui::ViewContext<Self>) -> impl gpui::IntoElement {
-        info!("render workspaces");
-        let workspaces = self.workspaces.read(cx);
-        h_flex().gap_x_3().justify_between().children(
-            workspaces
-                .iter()
-                .map(|w| {
-                    div()
-                        .size_7()
-                        .border_2()
-                        .rounded_xl()
-                        .px_2()
-                        .border_color(rgb(0xffc0cb))
-                        .bg({
-                            if w.active {
-                                rgb(0xd8bfd8)
-                            } else {
-                                rgb(0xeff1f5)
-                            }
-                        })
-                        .child(w.id.to_string())
-                })
-                .collect::<Vec<_>>(),
-        )
+    fn render(&mut self, _cx: &mut gpui::ViewContext<Self>) -> impl gpui::IntoElement {
+        debug!("render workspaces");
+
+        h_flex()
+            .gap_x_3()
+            .justify_between()
+            .children(self.workspaces.iter().map(|w| {
+                div()
+                    .size_7()
+                    .border_2()
+                    .rounded_xl()
+                    .px_2()
+                    .border_color(rgb(0xffc0cb))
+                    .bg({
+                        if w.active {
+                            rgb(0xd8bfd8)
+                        } else {
+                            rgb(0xeff1f5)
+                        }
+                    })
+                    .child(w.id.to_string())
+            }))
     }
 }
-
-impl StatusItemView for Workspaces {}

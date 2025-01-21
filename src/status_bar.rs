@@ -1,6 +1,5 @@
 use gpui::{
-    px, rems, rgb, AnyView, FontWeight, IntoElement, ParentElement, Render, Styled, View,
-    ViewContext, VisualContext,
+    px, rems, rgb, AnyView, FontWeight, IntoElement, ParentElement, Render, Styled, ViewContext,
 };
 
 use crate::{
@@ -8,15 +7,9 @@ use crate::{
     widgets::{clock::Clock, workspace::Workspaces},
 };
 
-pub trait StatusItemView: Render {}
-
-trait StatusItemViewHandle: Send {
-    fn to_any(&self) -> AnyView;
-}
-
 pub struct StatusBar {
-    left_items: Vec<Box<dyn StatusItemViewHandle>>,
-    right_items: Vec<Box<dyn StatusItemViewHandle>>,
+    left_items: Vec<AnyView>,
+    right_items: Vec<AnyView>,
 }
 
 impl Render for StatusBar {
@@ -37,39 +30,27 @@ impl Render for StatusBar {
 }
 
 impl StatusBar {
-    fn render_left_tools(&self, cx: &mut ViewContext<Self>) -> impl IntoElement {
+    fn render_left_tools(&self, _cx: &mut ViewContext<Self>) -> impl IntoElement {
         h_flex()
             .gap(rems(4.))
             .overflow_x_hidden()
-            .children(self.left_items.iter().map(|item| item.to_any()))
+            .children(self.left_items.iter().cloned())
     }
 
-    fn render_right_tools(&self, cx: &mut ViewContext<Self>) -> impl IntoElement {
+    fn render_right_tools(&self, _cx: &mut ViewContext<Self>) -> impl IntoElement {
         h_flex()
             .gap(rems(4.))
-            .children(self.right_items.iter().map(|item| item.to_any()))
+            .children(self.right_items.iter().cloned())
     }
 }
 
 impl StatusBar {
     pub fn new(cx: &mut ViewContext<Self>) -> Self {
-        let clock = cx.new_view(|cx| Clock::new(cx));
-        let workspaces = cx.new_view(|cx| Workspaces::new(cx));
+        let clock = Clock::new(cx).clone();
+        let workspaces = Workspaces::new(cx).clone();
         Self {
-            left_items: vec![Box::new(workspaces)],
-            right_items: vec![Box::new(clock)],
+            left_items: vec![workspaces.into()],
+            right_items: vec![clock.into()],
         }
-    }
-}
-
-impl<T: StatusItemView> StatusItemViewHandle for View<T> {
-    fn to_any(&self) -> AnyView {
-        self.clone().into()
-    }
-}
-
-impl From<&dyn StatusItemViewHandle> for AnyView {
-    fn from(val: &dyn StatusItemViewHandle) -> Self {
-        val.to_any().clone()
     }
 }
