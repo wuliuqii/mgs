@@ -21,4 +21,5 @@ And that's for learning purpose. Currently, I'm trying to implement a status bar
 ## Special Thanks
 
 - [zed](https://github.com/zed-industries/zed): For the rendering part and ui design.
+- [gpui-component](https://github.com/longbridge/gpui-component): Almost all the ui code copied from here.
 - [Ironbar](https://github.com/JakeStanger/ironbar): For status bar implementation.

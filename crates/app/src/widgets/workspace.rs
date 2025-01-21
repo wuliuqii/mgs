@@ -13,7 +13,7 @@ use tokio::{
 };
 use tracing::{debug, info};
 
-use ui::stack::h_flex;
+use ui::h_flex;
 
 struct Workspace {
     pub id: i32,
@@ -101,14 +101,14 @@ impl Workspaces {
                 rx,
             };
 
-            instance.listen_workspace_events();
-            instance.handle_workspace_event(cx);
+            instance.listen_events();
+            instance.handle_event(cx);
 
             instance
         })
     }
 
-    fn listen_workspace_events(&self) {
+    fn listen_events(&self) {
         info!("Starting Hyprland event listener");
 
         let tx = self.tx.clone();
@@ -227,14 +227,14 @@ impl Workspaces {
         });
     }
 
-    fn handle_workspace_event(&mut self, cx: &mut ViewContext<Self>) {
+    fn handle_event(&mut self, cx: &mut ViewContext<Self>) {
         let mut rx = self.tx.subscribe();
         cx.spawn(|this, mut cx| async move {
             while let Ok(msg) = rx.recv().await {
                 debug!("workspace event: {:?}", msg);
                 match msg {
                     WorkspaceMessage::Changed => {
-                        this.update(&mut cx, |this: &mut Workspaces, cx| {
+                        this.update(&mut cx, |this: &mut Self, cx| {
                             this.workspaces = get_workspaces();
                             cx.notify();
                         })

@@ -1,7 +1,7 @@
 use gpui::{
     px, rems, rgb, AnyView, FontWeight, IntoElement, ParentElement, Render, Styled, ViewContext,
 };
-use ui::stack::h_flex;
+use ui::h_flex;
 
 use crate::widgets::{clock::Clock, workspace::Workspaces};
 

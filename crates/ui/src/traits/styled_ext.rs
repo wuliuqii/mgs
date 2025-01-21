@@ -1,6 +1,6 @@
 use gpui::Styled;
 
-/// Extends [`gpui::Styled`] with Zed-specific styling methods.
+/// Extends [`gpui::Styled`]
 pub trait StyledExt: Styled + Sized {
     /// Horizontally stacks elements.
     ///

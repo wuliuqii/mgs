@@ -26,14 +26,13 @@ async fn main() {
             ..Default::default()
         };
 
-        cx.open_window(
-            WindowOptions {
-                window_bounds: Some(WindowBounds::Windowed(bounds)),
-                kind: WindowKind::LayerShell(layer_shell_settings),
-                ..Default::default()
-            },
-            |cx| cx.new_view(StatusBar::new),
-        )
-        .unwrap();
+        let opts = WindowOptions {
+            window_bounds: Some(WindowBounds::Windowed(bounds)),
+            kind: WindowKind::LayerShell(layer_shell_settings),
+            ..Default::default()
+        };
+
+        cx.open_window(opts, |cx| cx.new_view(StatusBar::new))
+            .unwrap();
     });
 }

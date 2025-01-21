@@ -3,7 +3,8 @@ members = ["crates/*"]
 resolver = "2"
 
 [workspace.dependencies]
-gpui = { git = "https://github.com/wuliuqii/zed", branch = "layer-shell" }
+# gpui = { git = "https://github.com/wuliuqii/zed", branch = "layer-shell" }
+gpui = { path = "../zed/crates/gpui/" }
 ui = { path = "crates/ui" }
 
 [profile.release]
