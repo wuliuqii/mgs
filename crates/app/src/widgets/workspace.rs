@@ -13,7 +13,7 @@ use tokio::{
 };
 use tracing::{debug, info};
 
-use crate::ui::stack::h_flex;
+use ui::stack::h_flex;
 
 struct Workspace {
     pub id: i32,
@@ -165,7 +165,7 @@ impl Workspaces {
                 let tx = tx.clone();
                 let lock = lock.clone();
 
-                event_listener.add_workspace_moved_handler({
+                event_listener.add_workspace_deleted_handler({
                     move |e| {
                         let _lock = lock.lock().unwrap();
                         debug!("workspace moved: {:?}", e);

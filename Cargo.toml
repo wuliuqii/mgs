@@ -1,13 +1,19 @@
-[package]
-name = "mgs"
-version = "0.1.0"
-edition = "2021"
+[workspace]
+members = ["crates/*"]
+resolver = "2"
 
-[dependencies]
+[workspace.dependencies]
 gpui = { git = "https://github.com/wuliuqii/zed", branch = "layer-shell" }
+ui = { path = "crates/ui" }
 
-tokio = { version = "1", features = ["full"] }
-chrono = "0.4.39"
-hyprland = "0.4.0-beta.2"
-tracing = { version = "0.1.41", features = ["log"] }
-tracing-subscriber = "0.3.19"
+[profile.release]
+codegen-units = 1
+lto = true
+panic = "abort"
+incremental = false
+opt-level = "z"
+strip = true
+rpath = false
+debug = false
+debug-assertions = false
+overflow-checks = false

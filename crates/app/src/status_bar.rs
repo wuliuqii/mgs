@@ -1,11 +1,9 @@
 use gpui::{
     px, rems, rgb, AnyView, FontWeight, IntoElement, ParentElement, Render, Styled, ViewContext,
 };
+use ui::stack::h_flex;
 
-use crate::{
-    ui::stack::h_flex,
-    widgets::{clock::Clock, workspace::Workspaces},
-};
+use crate::widgets::{clock::Clock, workspace::Workspaces};
 
 pub struct StatusBar {
     left_items: Vec<AnyView>,

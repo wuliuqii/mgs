@@ -40,6 +40,6 @@ impl Render for Clock {
         div()
             .flex()
             .text_color(rgb(0x4c4f69))
-            .child(self.date.format("%H:%M:%S").to_string())
+            .child(self.date.format("%H:%M").to_string())
     }
 }

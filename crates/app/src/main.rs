@@ -5,7 +5,6 @@ use gpui::{
 use status_bar::StatusBar;
 
 mod status_bar;
-mod ui;
 mod widgets;
 
 #[tokio::main]
