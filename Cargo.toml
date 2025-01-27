@@ -6,6 +6,7 @@ resolver = "2"
 # gpui = { git = "https://github.com/wuliuqii/zed", branch = "layer-shell" }
 gpui = { path = "../zed/crates/gpui/" }
 ui = { path = "crates/ui" }
+anyhow = "1.0.95"
 
 [profile.release]
 codegen-units = 1

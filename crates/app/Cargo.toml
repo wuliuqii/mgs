@@ -8,6 +8,7 @@ name = "mgs"
 path = "src/main.rs"
 
 [dependencies]
+anyhow.workspace = true
 gpui.workspace = true
 ui.workspace = true
 
