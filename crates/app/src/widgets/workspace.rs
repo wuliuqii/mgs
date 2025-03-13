@@ -1,8 +1,5 @@
 use std::sync::{Arc, Mutex};
 
-use gpui::{
-    div, rgb, EventEmitter, ParentElement, Render, Styled, View, ViewContext, VisualContext,
-};
 use hyprland::{
     event_listener::EventListener,
     shared::{HyprData, HyprDataActive, HyprDataVec},
@@ -13,13 +10,20 @@ use tokio::{
 };
 use tracing::{debug, info};
 
-use ui::h_flex;
+use ui::{
+    div, h_flex, prelude::Window, rgb, AppContext, Context, Entity, EventEmitter, IntoElement,
+    ParentElement, Render, Styled,
+};
 
+#[derive(Debug, Clone)]
 struct Workspace {
     pub id: i32,
+    #[allow(dead_code)]
     pub name: String,
+    #[allow(dead_code)]
     pub monitor_id: Option<usize>,
     pub active: bool,
+    #[allow(dead_code)]
     pub windows: u16,
 }
 
@@ -33,8 +37,6 @@ fn get_workspaces() -> Vec<Workspace> {
         .unwrap_or_default();
 
     workspaces.sort_by_key(|w| w.id);
-
-    let mut current: usize = 1;
 
     workspaces
         .into_iter()
@@ -52,27 +54,13 @@ fn get_workspaces() -> Vec<Workspace> {
                     windows: w.windows,
                 }]
             } else {
-                let missing: usize = w.id as usize - current;
-                let mut res = Vec::with_capacity(missing + 1);
-                for i in 0..missing {
-                    res.push(Workspace {
-                        id: (current + i) as i32,
-                        name: (current + i).to_string(),
-                        monitor_id: None,
-                        active: false,
-                        windows: 0,
-                    });
-                }
-                current += missing + 1;
-                res.push(Workspace {
+                vec![Workspace {
                     id: w.id,
                     name: w.name.clone(),
                     monitor_id: Some(w.monitor_id as usize),
                     active: Some(w.id) == active.as_ref().map(|w| w.id),
                     windows: w.windows,
-                });
-
-                res
+                }]
             }
         })
         .collect()
@@ -86,14 +74,15 @@ enum WorkspaceMessage {
 pub struct Workspaces {
     workspaces: Vec<Workspace>,
     tx: Sender<WorkspaceMessage>,
+    #[allow(dead_code)]
     rx: Receiver<WorkspaceMessage>,
 }
 
 impl EventEmitter<WorkspaceMessage> for Workspaces {}
 
 impl Workspaces {
-    pub fn new<V: 'static>(cx: &mut ViewContext<V>) -> View<Self> {
-        cx.new_view(|cx| {
+    pub fn new<V: 'static>(cx: &mut Context<V>) -> Entity<Self> {
+        cx.new(|cx| {
             let (tx, rx) = channel(16);
             let mut instance = Self {
                 workspaces: get_workspaces(),
@@ -227,7 +216,7 @@ impl Workspaces {
         });
     }
 
-    fn handle_event(&mut self, cx: &mut ViewContext<Self>) {
+    fn handle_event(&mut self, cx: &mut Context<Self>) {
         let mut rx = self.tx.subscribe();
         cx.spawn(|this, mut cx| async move {
             while let Ok(msg) = rx.recv().await {
@@ -248,7 +237,7 @@ impl Workspaces {
 }
 
 impl Render for Workspaces {
-    fn render(&mut self, _cx: &mut gpui::ViewContext<Self>) -> impl gpui::IntoElement {
+    fn render(&mut self, window: &mut Window, cx: &mut Context<'_, Self>) -> impl IntoElement {
         debug!("render workspaces");
 
         h_flex()
@@ -268,7 +257,7 @@ impl Render for Workspaces {
                             rgb(0xeff1f5)
                         }
                     })
-                    .child(w.id.to_string())
+                    .child(w.name.to_string())
             }))
     }
 }

@@ -1,8 +1,8 @@
-use gpui::{
-    point, px, size, Anchor, App, AppContext, Bounds, KeyboardInteractivity, Layer,
-    LayerShellSettings, VisualContext, WindowBounds, WindowKind, WindowOptions,
-};
 use status_bar::StatusBar;
+use ui::{
+    point, px, size, Anchor, App, AppContext, Application, Bounds, KeyboardInteractivity, Layer,
+    LayerShellSettings, WindowBounds, WindowKind, WindowOptions,
+};
 
 mod status_bar;
 mod widgets;
@@ -11,7 +11,7 @@ mod widgets;
 async fn main() {
     tracing_subscriber::fmt::init();
 
-    App::new().run(|cx: &mut AppContext| {
+    Application::new().run(|cx: &mut App| {
         let height = px(30.0);
         let bounds = Bounds {
             origin: point(px(0.), px(0.)),
@@ -32,7 +32,7 @@ async fn main() {
             ..Default::default()
         };
 
-        cx.open_window(opts, |cx| cx.new_view(StatusBar::new))
+        cx.open_window(opts, |_, cx| cx.new(StatusBar::new))
             .unwrap();
     });
 }

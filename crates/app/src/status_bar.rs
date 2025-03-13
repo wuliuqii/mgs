@@ -1,7 +1,5 @@
-use gpui::{
-    px, rems, rgb, AnyView, FontWeight, IntoElement, ParentElement, Render, Styled, ViewContext,
-};
-use ui::h_flex;
+use gpui::{px, rems, rgb, AnyView, FontWeight, IntoElement, ParentElement, Render, Styled};
+use ui::{h_flex, prelude::Window, Context};
 
 use crate::widgets::{clock::Clock, workspace::Workspaces};
 
@@ -11,7 +9,7 @@ pub struct StatusBar {
 }
 
 impl Render for StatusBar {
-    fn render(&mut self, cx: &mut ViewContext<Self>) -> impl IntoElement {
+    fn render(&mut self, _window: &mut Window, cx: &mut Context<'_, Self>) -> impl IntoElement {
         h_flex()
             .w_full()
             .h_full()
@@ -28,14 +26,14 @@ impl Render for StatusBar {
 }
 
 impl StatusBar {
-    fn render_left_tools(&self, _cx: &mut ViewContext<Self>) -> impl IntoElement {
+    fn render_left_tools(&self, _cx: &mut Context<Self>) -> impl IntoElement {
         h_flex()
             .gap(rems(4.))
             .overflow_x_hidden()
             .children(self.left_items.iter().cloned())
     }
 
-    fn render_right_tools(&self, _cx: &mut ViewContext<Self>) -> impl IntoElement {
+    fn render_right_tools(&self, _cx: &mut Context<Self>) -> impl IntoElement {
         h_flex()
             .gap(rems(4.))
             .children(self.right_items.iter().cloned())
@@ -43,7 +41,7 @@ impl StatusBar {
 }
 
 impl StatusBar {
-    pub fn new(cx: &mut ViewContext<Self>) -> Self {
+    pub fn new(cx: &mut Context<Self>) -> Self {
         let clock = Clock::new(cx).clone();
         let workspaces = Workspaces::new(cx).clone();
         Self {
