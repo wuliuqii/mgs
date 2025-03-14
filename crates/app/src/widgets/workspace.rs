@@ -1,5 +1,6 @@
 use std::sync::{Arc, Mutex};
 
+use gpui::MouseButton;
 use hyprland::{
     event_listener::EventListener,
     shared::{HyprData, HyprDataActive, HyprDataVec},
@@ -8,11 +9,11 @@ use tokio::{
     sync::broadcast::{channel, Receiver, Sender},
     task::spawn_blocking,
 };
-use tracing::{debug, info};
+use tracing::{debug, error, info};
 
 use ui::{
-    div, h_flex, prelude::Window, rgb, AppContext, Context, Entity, EventEmitter, IntoElement,
-    ParentElement, Render, Styled,
+    div, h_flex, prelude::Window, px, rgb, AppContext, Context, Entity, EventEmitter,
+    FluentBuilder, InteractiveElement, IntoElement, ParentElement, Render, Styled,
 };
 
 #[derive(Debug, Clone)]
@@ -237,27 +238,34 @@ impl Workspaces {
 }
 
 impl Render for Workspaces {
-    fn render(&mut self, window: &mut Window, cx: &mut Context<'_, Self>) -> impl IntoElement {
+    fn render(&mut self, _window: &mut Window, _cx: &mut Context<'_, Self>) -> impl IntoElement {
         debug!("render workspaces");
 
+        let workspaces = self.workspaces.clone();
         h_flex()
-            .gap_x_3()
+            .gap_x_1()
             .justify_between()
-            .children(self.workspaces.iter().map(|w| {
+            .children(workspaces.into_iter().map(|w| {
                 div()
                     .size_7()
                     .border_2()
-                    .rounded_xl()
+                    .rounded(px(10.))
                     .px_2()
-                    .border_color(rgb(0xffc0cb))
-                    .bg({
-                        if w.active {
-                            rgb(0xd8bfd8)
-                        } else {
-                            rgb(0xeff1f5)
+                    .when(w.active, |el| el.border_color(rgb(0xffc0cb)))
+                    .hover(|el| el.bg(rgb(0xd8bfd8)))
+                    .child(w.name.to_string())
+                    .on_mouse_down(MouseButton::Left, move |_, _, _| {
+                        debug!("changing workspace to: {}", w.id);
+                        let res = hyprland::dispatch::Dispatch::call(
+                            hyprland::dispatch::DispatchType::Workspace(
+                                hyprland::dispatch::WorkspaceIdentifierWithSpecial::Id(w.id),
+                            ),
+                        );
+
+                        if let Err(e) = res {
+                            error!("failed to dispatch workspace change: {:?}", e);
                         }
                     })
-                    .child(w.name.to_string())
             }))
     }
 }
