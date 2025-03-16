@@ -153,6 +153,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "assets"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "gpui",
+ "rust-embed",
+]
+
+[[package]]
 name = "async-broadcast"
 version = "0.7.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2755,6 +2764,7 @@ dependencies = [
 name = "mgs"
 version = "0.1.0"
 dependencies = [
+ "assets",
  "chrono",
  "gpui",
  "hyprland",
@@ -4899,17 +4909,6 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "gpui",
- "image",
- "itertools 0.14.0",
- "once_cell",
- "paste",
- "regex",
- "serde",
- "serde_json",
- "smallvec",
- "smol",
- "unicode-segmentation",
- "uuid",
 ]
 
 [[package]]

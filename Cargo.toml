@@ -1,11 +1,14 @@
 [workspace]
-members = ["crates/app", "crates/ui"]
+members = ["crates/*"]
 resolver = "2"
 
 [workspace.dependencies]
 # gpui = { git = "https://github.com/wuliuqii/zed", branch = "layer-shell" }
 gpui = { path = "../zed/crates/gpui/" }
 ui = { path = "crates/ui" }
+assets = { path = "crates/assets" }
+
+anyhow = "1.0.95"
 
 [profile.release]
 codegen-units = 1

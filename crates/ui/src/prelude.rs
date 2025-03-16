@@ -6,4 +6,5 @@ pub use gpui::{
     Rems, RenderOnce, SharedString, Styled, Window, WindowBounds, WindowKind, WindowOptions,
 };
 
+pub use crate::components::*;
 pub use crate::traits::styled_ext::*;
