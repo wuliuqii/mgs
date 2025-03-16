@@ -1,7 +1,7 @@
 use gpui::{px, rems, rgb, AnyView, FontWeight, IntoElement, ParentElement, Render, Styled};
 use ui::{h_flex, prelude::Window, Context};
 
-use crate::widgets::{clock::Clock, workspace::Workspaces};
+use crate::widgets::{battry::Battery, clock::Clock, workspace::Workspaces};
 
 pub struct StatusBar {
     left_items: Vec<AnyView>,
@@ -28,14 +28,14 @@ impl Render for StatusBar {
 impl StatusBar {
     fn render_left_tools(&self, _cx: &mut Context<Self>) -> impl IntoElement {
         h_flex()
-            .gap(rems(4.))
+            .gap(px(4.))
             .overflow_x_hidden()
             .children(self.left_items.iter().cloned())
     }
 
     fn render_right_tools(&self, _cx: &mut Context<Self>) -> impl IntoElement {
         h_flex()
-            .gap(rems(4.))
+            .gap(px(4.))
             .children(self.right_items.iter().cloned())
     }
 }
@@ -43,10 +43,11 @@ impl StatusBar {
 impl StatusBar {
     pub fn new(cx: &mut Context<Self>) -> Self {
         let clock = Clock::new(cx).clone();
+        let battery = Battery::new(cx).clone();
         let workspaces = Workspaces::new(cx).clone();
         Self {
             left_items: vec![workspaces.into()],
-            right_items: vec![clock.into()],
+            right_items: vec![battery.into(), clock.into()],
         }
     }
 }

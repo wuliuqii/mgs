@@ -1,10 +1,7 @@
 use std::time::Duration;
 
 use chrono::{DateTime, Local};
-use tracing::debug;
-use ui::{
-    div, rgb, AppContext, Context, Entity, IntoElement, ParentElement, Render, Styled, Window,
-};
+use ui::prelude::*;
 
 const UPDATE_DEBOUNCE: Duration = Duration::from_millis(1000);
 
@@ -37,11 +34,6 @@ impl Clock {
 
 impl Render for Clock {
     fn render(&mut self, _window: &mut Window, _cx: &mut Context<Self>) -> impl IntoElement {
-        debug!("render clock");
-
-        div()
-            .flex()
-            .text_color(rgb(0x4c4f69))
-            .child(self.date.format("%H:%M").to_string())
+        div().flex().child(self.date.format("%H:%M").to_string())
     }
 }

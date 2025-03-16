@@ -1,6 +1,5 @@
 use std::sync::{Arc, Mutex};
 
-use gpui::MouseButton;
 use hyprland::{
     event_listener::EventListener,
     shared::{HyprData, HyprDataActive, HyprDataVec},
@@ -11,10 +10,7 @@ use tokio::{
 };
 use tracing::{debug, error, info};
 
-use ui::{
-    div, h_flex, prelude::Window, px, rgb, AppContext, Context, Entity, EventEmitter,
-    FluentBuilder, InteractiveElement, IntoElement, ParentElement, Render, Styled,
-};
+use ui::prelude::*;
 
 #[derive(Debug, Clone)]
 struct Workspace {
@@ -239,22 +235,18 @@ impl Workspaces {
 
 impl Render for Workspaces {
     fn render(&mut self, _window: &mut Window, _cx: &mut Context<'_, Self>) -> impl IntoElement {
-        debug!("render workspaces");
-
         let workspaces = self.workspaces.clone();
         h_flex()
-            .gap_x_1()
             .justify_between()
             .children(workspaces.into_iter().map(|w| {
-                div()
-                    .size_7()
-                    .border_2()
-                    .rounded(px(10.))
-                    .px_2()
-                    .when(w.active, |el| el.border_color(rgb(0xffc0cb)))
-                    .hover(|el| el.bg(rgb(0xd8bfd8)))
-                    .child(w.name.to_string())
-                    .on_mouse_down(MouseButton::Left, move |_, _, _| {
+                Button::new()
+                    .label(w.name.to_string())
+                    .size(28.)
+                    .border(2.)
+                    .rounded(10.)
+                    .hover(rgb(0xe1dede))
+                    .when(w.active, |this| this.border_color(rgb(0xffc0cb)))
+                    .on_click(move |_, _, _| {
                         debug!("changing workspace to: {}", w.id);
                         let res = hyprland::dispatch::Dispatch::call(
                             hyprland::dispatch::DispatchType::Workspace(

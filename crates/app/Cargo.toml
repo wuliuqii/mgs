@@ -10,6 +10,7 @@ path = "src/main.rs"
 [dependencies]
 gpui.workspace = true
 ui.workspace = true
+assets.workspace = true
 
 tokio = { version = "1", features = ["full"] }
 hyprland = "0.4.0-beta.2"
