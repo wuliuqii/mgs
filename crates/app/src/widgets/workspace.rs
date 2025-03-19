@@ -215,12 +215,12 @@ impl Workspaces {
 
     fn handle_event(&mut self, cx: &mut Context<Self>) {
         let mut rx = self.tx.subscribe();
-        cx.spawn(|this, mut cx| async move {
+        cx.spawn(async move |this, cx| {
             while let Ok(msg) = rx.recv().await {
                 debug!("workspace event: {:?}", msg);
                 match msg {
                     WorkspaceMessage::Changed => {
-                        this.update(&mut cx, |this: &mut Self, cx| {
+                        this.update(cx, |this: &mut Self, cx| {
                             this.workspaces = get_workspaces();
                             cx.notify();
                         })

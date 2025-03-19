@@ -3,8 +3,6 @@ use std::time::Duration;
 use chrono::{DateTime, Local};
 use ui::prelude::*;
 
-const UPDATE_DEBOUNCE: Duration = Duration::from_millis(1000);
-
 pub struct Clock {
     date: DateTime<Local>,
 }
@@ -14,16 +12,14 @@ impl Clock {
         cx.new(|cx| {
             let clock = Self { date: Local::now() };
 
-            cx.spawn(|this, mut cx| async move {
-                loop {
-                    this.update(&mut cx, |this: &mut Clock, cx| {
-                        this.date = Local::now();
-                        cx.notify();
-                    })
-                    .ok();
+            cx.spawn(async move |this, cx| loop {
+                this.update(cx, |this: &mut Clock, cx| {
+                    this.date = Local::now();
+                    cx.notify();
+                })
+                .ok();
 
-                    cx.background_executor().timer(UPDATE_DEBOUNCE).await;
-                }
+                Timer::after(Duration::from_secs(1)).await;
             })
             .detach();
 

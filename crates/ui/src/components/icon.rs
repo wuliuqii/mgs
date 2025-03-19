@@ -1,6 +1,7 @@
 use gpui::*;
 use prelude::FluentBuilder;
 
+#[derive(Clone, Copy)]
 pub enum Icons {
     BatteryLow,
     BatteryMedium,
@@ -24,10 +25,10 @@ impl Icons {
 
 #[derive(IntoElement)]
 pub struct Icon {
-    pub icon: Icons,
-    pub size: f32,
-    pub color: Rgba,
-    pub hover: Option<Rgba>,
+    icon: Icons,
+    size: f32,
+    color: Rgba,
+    hover: Option<Rgba>,
 }
 
 impl Icon {
