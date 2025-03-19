@@ -1,13 +1,13 @@
 use std::sync::Arc;
 
 use gpui::{
-    div, prelude::FluentBuilder, px, App, InteractiveElement, IntoElement, MouseButton,
+    div, prelude::FluentBuilder, px, rgb, App, InteractiveElement, IntoElement, MouseButton,
     MouseDownEvent, ParentElement, RenderOnce, Rgba, SharedString, Styled, Window,
 };
 
 #[derive(IntoElement)]
 pub struct Button {
-    size: f32,
+    size: Option<f32>,
     rounded: f32,
     border: f32,
     bg_color: Option<Rgba>,
@@ -24,12 +24,12 @@ impl Button {
     pub fn new() -> Self {
         Self {
             label: SharedString::from("Button"),
-            size: 20.,
-            rounded: 0.0,
+            size: None,
+            rounded: 4.0,
             border: 0.0,
             bg_color: None,
             border_color: None,
-            hover_bg: None,
+            hover_bg: Some(rgb(0xe1dede)),
             on_click: Arc::new(|_, _, _| println!("Clicked!")),
         }
     }
@@ -40,7 +40,7 @@ impl Button {
     }
 
     pub fn size(mut self, size: f32) -> Self {
-        self.size = size;
+        self.size = Some(size);
         self
     }
 
@@ -89,10 +89,11 @@ impl RenderOnce for Button {
         let on_click = self.on_click.clone();
         div()
             .flex()
-            .size(px(self.size))
             .border(px(self.border))
             .rounded(px(self.rounded))
             .child(self.label.clone())
+            .when_some(self.size, |this, size| this.size(px(size)).px(px(5.)))
+            .when_none(&self.size, |this| this.w_auto())
             .when_some(self.hover_bg, |this, color| {
                 this.hover(|this| this.bg(color))
             })

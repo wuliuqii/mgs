@@ -1,9 +1,10 @@
 pub use gpui::prelude::*;
 pub use gpui::{
-    div, point, px, relative, rems, rgb, size, AbsoluteLength, Anchor, App, AppContext,
-    Application, Bounds, DefiniteLength, Div, Element, ElementId, Entity, EventEmitter,
-    InteractiveElement, KeyboardInteractivity, Layer, LayerShellSettings, ParentElement, Pixels,
-    Rems, RenderOnce, SharedString, Styled, Window, WindowBounds, WindowKind, WindowOptions,
+    AbsoluteLength, Anchor, App, AppContext, Application, AsyncApp, Bounds, DefiniteLength, Div,
+    Element, ElementId, Entity, EventEmitter, InteractiveElement, KeyboardInteractivity, Layer,
+    LayerShellSettings, ParentElement, Pixels, Rems, RenderOnce, Rgba, SharedString, Styled, Timer,
+    WeakEntity, Window, WindowBounds, WindowKind, WindowOptions, div, point, px, relative, rems,
+    rgb, size,
 };
 
 pub use crate::components::*;

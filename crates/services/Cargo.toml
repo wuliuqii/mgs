@@ -1,0 +1,12 @@
+[package]
+name = "services"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow.workspace = true
+futures-util.workspace = true
+zbus.workspace = true
+
+[dev-dependencies]
+tokio.workspace = true

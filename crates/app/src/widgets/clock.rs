@@ -1,9 +1,8 @@
 use std::time::Duration;
 
 use chrono::{DateTime, Local};
+use gpui::{AsyncApp, WeakEntity};
 use ui::prelude::*;
-
-const UPDATE_DEBOUNCE: Duration = Duration::from_millis(1000);
 
 pub struct Clock {
     date: DateTime<Local>,
@@ -14,15 +13,15 @@ impl Clock {
         cx.new(|cx| {
             let clock = Self { date: Local::now() };
 
-            cx.spawn(|this, mut cx| async move {
+            cx.spawn(async move |this: WeakEntity<Self>, cx: &mut AsyncApp| {
                 loop {
-                    this.update(&mut cx, |this: &mut Clock, cx| {
+                    this.update(cx, |this: &mut Clock, cx| {
                         this.date = Local::now();
                         cx.notify();
                     })
                     .ok();
 
-                    cx.background_executor().timer(UPDATE_DEBOUNCE).await;
+                    Timer::after(Duration::from_secs(1)).await;
                 }
             })
             .detach();
@@ -34,6 +33,8 @@ impl Clock {
 
 impl Render for Clock {
     fn render(&mut self, _window: &mut Window, _cx: &mut Context<Self>) -> impl IntoElement {
-        div().flex().child(self.date.format("%H:%M").to_string())
+        div()
+            .flex()
+            .child(Button::new().label(self.date.format("%H:%M").to_string()))
     }
 }
