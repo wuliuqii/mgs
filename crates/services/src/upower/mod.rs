@@ -2,15 +2,12 @@ pub mod dbus;
 
 use anyhow::Result;
 use dbus::UPowerProxy;
-use std::sync::Arc;
 use zbus::fdo::PropertiesProxy;
 use zbus::proxy::CacheProperties;
 
 pub use dbus::BatteryState;
 
-pub const DEVICE_INTERFACE_NAME: &str = "org.freedesktop.UPower.Device";
-
-pub async fn create_upower_proxy() -> Result<Arc<PropertiesProxy<'static>>> {
+pub async fn create_upower_proxy() -> Result<PropertiesProxy<'static>> {
     let dbus = Box::pin(zbus::Connection::system()).await?;
 
     let device_proxy = UPowerProxy::new(&dbus).await?;
@@ -28,5 +25,5 @@ pub async fn create_upower_proxy() -> Result<Arc<PropertiesProxy<'static>>> {
         .build()
         .await?;
 
-    Ok(Arc::new(proxy))
+    Ok(proxy)
 }

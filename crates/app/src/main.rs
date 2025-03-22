@@ -1,8 +1,8 @@
 use assets::Assets;
 use status_bar::StatusBar;
 use ui::{
-    point, px, size, Anchor, App, AppContext, Application, Bounds, KeyboardInteractivity, Layer,
-    LayerShellSettings, WindowBounds, WindowKind, WindowOptions,
+    Anchor, App, AppContext, Application, Bounds, KeyboardInteractivity, Layer, LayerShellSettings,
+    WindowBounds, WindowKind, WindowOptions, point, px, size,
 };
 
 mod status_bar;
@@ -16,7 +16,7 @@ async fn main() {
     let app = Application::new().with_assets(assets);
 
     app.run(|cx: &mut App| {
-        let height = px(30.0);
+        let height = px(35.0);
         let bounds = Bounds {
             origin: point(px(0.), px(0.)),
             size: size(px(1440.), height),

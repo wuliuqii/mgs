@@ -1,40 +1,18 @@
 use gpui::*;
 use prelude::FluentBuilder;
 
-#[derive(Clone, Copy)]
-pub enum Icons {
-    BatteryLow,
-    BatteryMedium,
-    BatteryFull,
-    BatteryWarning,
-    BatteryCharging,
-}
-
-impl Icons {
-    pub fn path(&self) -> SharedString {
-        match self {
-            Icons::BatteryLow => "icons/battery-low.svg",
-            Icons::BatteryMedium => "icons/battery-medium.svg",
-            Icons::BatteryFull => "icons/battery-full.svg",
-            Icons::BatteryWarning => "icons/battery-warning.svg",
-            Icons::BatteryCharging => "icons/battery-charging.svg",
-        }
-        .into()
-    }
-}
-
 #[derive(IntoElement)]
 pub struct Icon {
-    icon: Icons,
+    icon_path: SharedString,
     size: f32,
     color: Rgba,
     hover: Option<Rgba>,
 }
 
 impl Icon {
-    pub fn new(icon: Icons) -> Self {
+    pub fn new(icon_path: SharedString) -> Self {
         Icon {
-            icon,
+            icon_path,
             size: 22.0,
             color: rgb(0x000000),
             hover: None,
@@ -68,6 +46,6 @@ impl RenderOnce for Icon {
             .when_some(self.hover, |this, color| {
                 this.hover(|this| this.text_color(color))
             })
-            .path(self.icon.path())
+            .path(self.icon_path)
     }
 }
