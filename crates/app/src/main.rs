@@ -1,9 +1,6 @@
 use assets::Assets;
 use status_bar::StatusBar;
-use ui::{
-    Anchor, App, AppContext, Application, Bounds, KeyboardInteractivity, Layer, LayerShellSettings,
-    WindowBounds, WindowKind, WindowOptions, point, px, size,
-};
+use ui::prelude::*;
 
 mod status_bar;
 mod widgets;

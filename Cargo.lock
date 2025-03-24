@@ -2044,7 +2044,8 @@ dependencies = [
 [[package]]
 name = "hyprland"
 version = "0.4.0-beta.2"
-source = "git+https://github.com/hyprland-community/hyprland-rs.git#552c77353f89fcb101935b151c47aa925682077e"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dc9c1413b6f0fd10b2e4463479490e30b2497ae4449f044da16053f5f2cb03b8"
 dependencies = [
  "ahash",
  "async-stream",
@@ -2065,7 +2066,8 @@ dependencies = [
 [[package]]
 name = "hyprland-macros"
 version = "0.4.0-beta.2"
-source = "git+https://github.com/hyprland-community/hyprland-rs.git#552c77353f89fcb101935b151c47aa925682077e"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "69e3cbed6e560408051175d29a9ed6ad1e64a7ff443836addf797b0479f58983"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -4565,9 +4567,9 @@ checksum = "1f3ccbac311fea05f86f61904b462b55fb3df8837a366dfc601a0161d0532f20"
 
 [[package]]
 name = "tokio"
-version = "1.43.0"
+version = "1.44.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3d61fa4ffa3de412bfea335c6ecff681de2b609ba3c77ef3e00e521813a9ed9e"
+checksum = "f382da615b842244d4b8738c82ed1275e6c5dd90c459a30941cd07080b06c91a"
 dependencies = [
  "backtrace",
  "bytes",

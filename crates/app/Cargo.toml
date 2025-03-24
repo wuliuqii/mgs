@@ -16,8 +16,7 @@ tokio.workspace = true
 zbus.workspace = true
 futures-util.workspace = true
 
-# hyprland = "0.4.0-beta.2"
-hyprland = { git = "https://github.com/hyprland-community/hyprland-rs.git" }
+hyprland = "0.4.0-beta.2"
 chrono = "0.4.39"
 tracing = { version = "0.1.41", features = ["log"] }
 tracing-subscriber = "0.3.19"
