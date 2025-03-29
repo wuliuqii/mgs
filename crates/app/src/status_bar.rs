@@ -1,5 +1,5 @@
-use gpui::{px, rems, rgb, AnyView, FontWeight, IntoElement, ParentElement, Render, Styled};
-use ui::{h_flex, prelude::Window, Context};
+use gpui::{AnyView, FontWeight, IntoElement, ParentElement, Render, Styled, px, rems, rgb};
+use ui::{Context, h_flex, prelude::Window};
 
 use crate::widgets::{clock::Clock, upower::Upower, workspace::Workspaces};
 

@@ -1,9 +1,17 @@
+use std::{
+    sync::{
+        Arc,
+        atomic::{AtomicUsize, Ordering},
+    },
+    time::Duration,
+};
+
+use futures::{SinkExt, StreamExt, channel::mpsc::Sender};
 use hyprland::{
     dispatch::{Dispatch, DispatchType, WorkspaceIdentifierWithSpecial},
     event_listener::{AsyncEventListener, WorkspaceEventData, WorkspaceMovedEventData},
     shared::{HyprData, HyprDataActive},
 };
-use tokio::sync::broadcast::{Receiver, Sender, channel};
 use tracing::{debug, info};
 
 use ui::prelude::*;
@@ -80,79 +88,82 @@ impl Workspaces {
     }
 
     pub fn new<V: 'static>(cx: &mut Context<V>) -> Entity<Self> {
-        let (tx, _): (Sender<Message>, Receiver<Message>) = channel(16);
+        let (tx, mut rx) = futures::channel::mpsc::channel(100);
         listen_events(tx.clone());
 
-        cx.new(|cx| {
-            let instance = Self::init();
+        let res = cx.new(|_| Self::init());
 
-            cx.spawn(async move |this: WeakEntity<Self>, cx: &mut AsyncApp| {
-                let entity = this.upgrade().unwrap();
-                let mut rx = tx.subscribe();
-                while let Ok(msg) = rx.recv().await {
-                    debug!("Received message: {:?}", msg);
+        cx.spawn({
+            let cnt = Arc::new(AtomicUsize::new(0));
+            let this = res.clone();
+
+            async move |_, cx| {
+                while let Some(msg) = rx.next().await {
+                    cnt.fetch_add(1, Ordering::SeqCst);
+                    debug!(
+                        "Received message: {:?}, cnt: {}",
+                        msg,
+                        cnt.load(Ordering::SeqCst)
+                    );
                     match msg {
                         Message::ChangeWorkspace(mut id) => {
                             if id < 0 {
                                 id = 0;
                             }
-                            entity
-                                .update(cx, |this, cx| {
-                                    this.workspaces[this.active].active = false;
-                                    let active = id as usize;
-                                    this.workspaces[active].active = true;
-                                    this.workspaces[active].visible = true;
-                                    this.active = active;
-                                    cx.notify();
-                                })
-                                .ok();
+                            this.update(cx, |this, cx| {
+                                this.workspaces[this.active].active = false;
+                                let active = id as usize;
+                                this.workspaces[active].active = true;
+                                this.workspaces[active].visible = true;
+                                this.active = active;
+                                cx.notify();
+                            })
+                            .ok();
                         }
                         Message::AddWorkspace(mut id) => {
                             if id < 0 {
                                 id = 0;
                             }
-                            entity
-                                .update(cx, |this, cx| {
-                                    let active = id as usize;
-                                    this.workspaces[active].visible = true;
-                                    cx.notify();
-                                })
-                                .ok();
+                            this.update(cx, |this, _cx| {
+                                let active = id as usize;
+                                this.workspaces[active].visible = true;
+                            })
+                            .ok();
                         }
                         Message::MoveWorkspace(mut id) => {
                             if id < 0 {
                                 id = 0;
                             }
-                            entity
-                                .update(cx, |this, cx| {
-                                    this.workspaces[this.active].active = false;
-                                    let active = id as usize;
-                                    this.workspaces[active].active = true;
-                                    this.workspaces[active].visible = true;
-                                    this.active = active;
-                                    cx.notify();
-                                })
-                                .ok();
+                            this.update(cx, |this, _cx| {
+                                this.workspaces[this.active].active = false;
+                                let active = id as usize;
+                                this.workspaces[active].active = true;
+                                this.workspaces[active].visible = true;
+                                this.active = active;
+                            })
+                            .ok();
                         }
                         Message::RemoveWorkspace(mut id) => {
                             if id < 0 {
                                 id = 0;
                             }
-                            entity
-                                .update(cx, |this, cx| {
-                                    let active = id as usize;
-                                    this.workspaces[active].visible = false;
-                                    cx.notify();
-                                })
-                                .ok();
+                            this.update(cx, |this, cx| {
+                                let active = id as usize;
+                                this.workspaces[active].visible = false;
+                                cx.notify();
+                            })
+                            .ok();
                         }
                     }
-                }
-            })
-            .detach();
 
-            instance
+                    Timer::after(Duration::from_millis(10)).await;
+                }
+                anyhow::Ok(())
+            }
         })
+        .detach();
+
+        res
     }
 }
 
@@ -160,6 +171,8 @@ fn listen_events(tx: Sender<Message>) {
     info!("Listening for hyprland events...");
 
     let tx = tx.clone();
+    // FIXME: maybe remove tokio, using cx.spawn, that can reduce memory usage,
+    // but cx.spawn will cause stuck issue, which i don't know why.
     tokio::spawn(async move {
         let mut event_listener = AsyncEventListener::new();
 
@@ -168,9 +181,9 @@ fn listen_events(tx: Sender<Message>) {
                 let tx = tx.clone();
                 move |e| {
                     debug!("Workspace changed: {}", e.id);
-                    let tx = tx.clone();
+                    let mut tx = tx.clone();
                     Box::pin(async move {
-                        let _ = tx.send(Message::ChangeWorkspace(e.id));
+                        tx.send(Message::ChangeWorkspace(e.id)).await.unwrap();
                     })
                 }
             });
@@ -181,9 +194,9 @@ fn listen_events(tx: Sender<Message>) {
                 let tx = tx.clone();
                 move |evt: WorkspaceEventData| {
                     debug!("Workspace added: {}", evt.id);
-                    let tx = tx.clone();
+                    let mut tx = tx.clone();
                     Box::pin(async move {
-                        let _ = tx.send(Message::AddWorkspace(evt.id));
+                        tx.send(Message::AddWorkspace(evt.id)).await.unwrap();
                     })
                 }
             });
@@ -194,9 +207,9 @@ fn listen_events(tx: Sender<Message>) {
                 let tx = tx.clone();
                 move |evt: WorkspaceMovedEventData| {
                     debug!("Workspace moved: {}", evt.id);
-                    let tx = tx.clone();
+                    let mut tx = tx.clone();
                     Box::pin(async move {
-                        let _ = tx.send(Message::MoveWorkspace(evt.id));
+                        tx.send(Message::MoveWorkspace(evt.id)).await.unwrap();
                     })
                 }
             });
@@ -207,9 +220,9 @@ fn listen_events(tx: Sender<Message>) {
                 let tx = tx.clone();
                 move |evt: WorkspaceEventData| {
                     debug!("Workspace deleted: {}", evt.id);
-                    let tx = tx.clone();
+                    let mut tx = tx.clone();
                     Box::pin(async move {
-                        let _ = tx.send(Message::RemoveWorkspace(evt.id));
+                        let _ = tx.send(Message::RemoveWorkspace(evt.id)).await.unwrap();
                     })
                 }
             });
