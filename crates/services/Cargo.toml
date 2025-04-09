@@ -7,6 +7,9 @@ edition = "2024"
 anyhow.workspace = true
 futures-util.workspace = true
 zbus.workspace = true
+futures-signals = "0.3.34"
+tracing.workspace = true
+itertools.workspace = true
 
 [dev-dependencies]
 tokio.workspace = true

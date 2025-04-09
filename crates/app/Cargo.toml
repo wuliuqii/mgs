@@ -17,8 +17,8 @@ zbus.workspace = true
 futures.workspace = true
 anyhow.workspace = true
 futures-util.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
 
 hyprland = "0.4.0-beta.2"
 chrono = "0.4.39"
-tracing = { version = "0.1.41", features = ["log"] }
-tracing-subscriber = "0.3.19"
