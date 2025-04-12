@@ -16,6 +16,7 @@ async fn main() {
         let height = px(35.0);
         let bounds = Bounds {
             origin: point(px(0.), px(0.)),
+            // TODO: Make this dynamic
             size: size(px(1440.), height),
         };
         let layer_shell_settings = LayerShellSettings {

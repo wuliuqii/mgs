@@ -1,6 +1,7 @@
 use gpui::{AnyView, FontWeight, IntoElement, ParentElement, Render, Styled, px, rems, rgb};
 use ui::{Context, h_flex, prelude::Window};
 
+use crate::widgets::network::NetworkWidget;
 use crate::widgets::{clock::Clock, upower::Upower, workspace::Workspaces};
 
 pub struct StatusBar {
@@ -14,7 +15,7 @@ impl Render for StatusBar {
             .w_full()
             .h_full()
             .justify_between()
-            .gap(rems(8.))
+            .gap_x(rems(8.))
             .px(px(4.))
             .bg(rgb(0xeff1f5))
             .font_family("MonoLisa")
@@ -28,14 +29,14 @@ impl Render for StatusBar {
 impl StatusBar {
     fn render_left_tools(&self, _cx: &mut Context<Self>) -> impl IntoElement {
         h_flex()
-            .gap(px(4.))
+            .gap_x(px(4.))
             .overflow_x_hidden()
             .children(self.left_items.iter().cloned())
     }
 
     fn render_right_tools(&self, _cx: &mut Context<Self>) -> impl IntoElement {
         h_flex()
-            .gap(px(4.))
+            .gap_x(px(4.))
             .children(self.right_items.iter().cloned())
     }
 }
@@ -45,9 +46,10 @@ impl StatusBar {
         let clock = Clock::new(cx).clone();
         let upower = Upower::new(cx).clone();
         let workspaces = Workspaces::new(cx).clone();
+        let network = NetworkWidget::new(cx).clone();
         Self {
             left_items: vec![workspaces.into()],
-            right_items: vec![upower.into(), clock.into()],
+            right_items: vec![network.into(), upower.into(), clock.into()],
         }
     }
 }

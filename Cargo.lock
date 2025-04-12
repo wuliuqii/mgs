@@ -2709,6 +2709,7 @@ dependencies = [
  "assets",
  "chrono",
  "futures",
+ "futures-signals",
  "futures-util",
  "gpui",
  "hyprland",
@@ -4070,6 +4071,7 @@ name = "services"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "chrono",
  "futures-signals",
  "futures-util",
  "itertools 0.14.0",

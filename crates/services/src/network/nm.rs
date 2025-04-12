@@ -92,6 +92,7 @@ impl<'a> NetworkManager<'a> {
                                 name: String::from_utf8_lossy(&access_point.ssid().await?)
                                     .into_owned(),
                                 strength: access_point.strength().await.unwrap_or_default(),
+                                device: device_proxy.inner().path().to_string(),
                             });
                         }
                     }
@@ -151,15 +152,22 @@ impl<'a> NetworkManager<'a> {
                 device_proxy.device_type().await.map(DeviceType::from),
                 Ok(DeviceType::Wifi)
             ) {
-                let wireless_device = StatisticsProxy::builder(&self.inner().connection())
+                let staticstics_proxy = StatisticsProxy::builder(&self.inner().connection())
                     .path(&device)?
                     .build()
                     .await?;
-                let tx = wireless_device.tx_bytes().await?;
-                let rx = wireless_device.rx_bytes().await?;
+                let tx = staticstics_proxy.tx_bytes().await?;
+                let rx = staticstics_proxy.rx_bytes().await?;
+                let timestamp = chrono::Utc::now().timestamp();
                 network_statistics.push(NetworkStatistics {
+                    prev_rx: rx,
+                    prev_tx: tx,
+                    prev_rx_time: timestamp,
+                    prev_tx_time: timestamp,
                     tx,
                     rx,
+                    rx_time: timestamp,
+                    tx_time: timestamp,
                     device: device_proxy.inner().path().to_string(),
                 });
             }

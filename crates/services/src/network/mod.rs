@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use anyhow::Ok;
 use futures_signals::signal::{Mutable, MutableSignalCloned};
 use futures_util::StreamExt;
@@ -40,6 +38,7 @@ pub enum ActiveConnectionInfo {
         id: String,
         name: String,
         strength: u8,
+        device: String,
     },
     Vpn {
         name: String,
@@ -81,9 +80,35 @@ impl From<u32> for ConnectivityState {
 
 #[derive(Debug, Clone)]
 pub struct NetworkStatistics {
+    prev_tx: u64,
+    prev_rx: u64,
+    prev_tx_time: i64,
+    prev_rx_time: i64,
     tx: u64,
     rx: u64,
-    device: String,
+    tx_time: i64,
+    rx_time: i64,
+    pub device: String,
+}
+
+impl NetworkStatistics {
+    pub fn rx_speed(&self) -> f64 {
+        let elapsed = self.rx_time - self.prev_rx_time;
+        if elapsed == 0 {
+            0.0
+        } else {
+            (self.rx - self.prev_rx) as f64 / elapsed as f64
+        }
+    }
+
+    pub fn tx_speed(&self) -> f64 {
+        let elapsed = self.tx_time - self.prev_tx_time;
+        if elapsed == 0 {
+            0.0
+        } else {
+            (self.tx - self.prev_tx) as f64 / elapsed as f64
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -114,7 +139,7 @@ impl NetworkData {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Client {
     data: Mutable<NetworkData>,
     conn: Connection,
@@ -122,15 +147,15 @@ pub struct Client {
 }
 
 impl Client {
-    pub async fn new() -> anyhow::Result<Arc<Self>> {
+    pub async fn new() -> anyhow::Result<Self> {
         let conn = Connection::system().await?;
         let data = Mutable::new(NetworkData::init(&conn).await?);
 
-        Ok(Arc::new(Self {
+        Ok(Self {
             data,
             conn,
             refresh_rate_ms: 1000,
-        }))
+        })
     }
 
     pub fn set_refresh_rate_ms(&mut self, refresh_rate_ms: u32) {
@@ -249,7 +274,10 @@ impl Client {
                             let mut data = self.data.lock_mut();
                             for stat in data.network_statistics.iter_mut() {
                                 if stat.device == device_str {
+                                    stat.prev_rx = stat.rx;
+                                    stat.prev_rx_time = stat.rx_time;
                                     stat.rx = value;
+                                    stat.rx_time = chrono::Utc::now().timestamp();
                                 }
                             }
                         }
@@ -269,7 +297,10 @@ impl Client {
                             let mut data = self.data.lock_mut();
                             for stat in data.network_statistics.iter_mut() {
                                 if stat.device == device_str {
+                                    stat.prev_tx = stat.tx;
+                                    stat.prev_tx_time = stat.tx_time;
                                     stat.tx = value;
+                                    stat.tx_time = chrono::Utc::now().timestamp();
                                 }
                             }
                         }
