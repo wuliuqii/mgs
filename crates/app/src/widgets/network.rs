@@ -35,21 +35,21 @@ impl NetworkWidget {
             };
 
             cx.spawn(async move |this: WeakEntity<Self>, cx: &mut AsyncApp| {
-                let mut client = network::Client::new().await.unwrap();
+                let mut subscriber = network::Subscriber::new().await.unwrap();
                 // todo: move to config
-                client.set_refresh_rate_ms(5000);
+                subscriber.set_refresh_rate_ms(5000);
                 cx.background_spawn({
-                    let client = client.clone();
+                    let client = subscriber.clone();
                     async move {
                         client.run().await.unwrap();
                     }
                 })
                 .detach();
 
-                let mut signal = client.subscribe().to_stream();
+                let mut signal = subscriber.subscribe().to_stream();
                 while let Some(data) = signal.next().await {
                     this.update(cx, |this: &mut Self, cx| {
-                        this.update(data);
+                        this.update(&data);
                         cx.notify();
                     })
                     .ok();
@@ -61,7 +61,7 @@ impl NetworkWidget {
         })
     }
 
-    fn update(&mut self, data: network::NetworkData) {
+    fn update(&mut self, data: &network::NetworkData) {
         debug!("Network data updated: {:?}", data);
 
         if !data.wifi_enabled {

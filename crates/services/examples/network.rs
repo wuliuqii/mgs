@@ -6,7 +6,7 @@ use services::network;
 
 #[tokio::main]
 async fn main() {
-    let client = network::Client::new().await.unwrap();
+    let client = network::Subscriber::new().await.unwrap();
     // Create a clone of client to be moved into the spawned task
     let client_clone = client.clone();
     tokio::spawn(async move {

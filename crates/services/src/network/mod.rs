@@ -140,13 +140,13 @@ impl NetworkData {
 }
 
 #[derive(Debug, Clone)]
-pub struct Client {
+pub struct Subscriber {
     data: Mutable<NetworkData>,
     conn: Connection,
     refresh_rate_ms: u32,
 }
 
-impl Client {
+impl Subscriber {
     pub async fn new() -> anyhow::Result<Self> {
         let conn = Connection::system().await?;
         let data = Mutable::new(NetworkData::init(&conn).await?);
@@ -163,7 +163,7 @@ impl Client {
     }
 
     pub async fn run(&self) -> anyhow::Result<()> {
-        info!("NetworkManager client started");
+        info!("NetworkManager subscriber start");
 
         let nm = NetworkManager::new(&self.conn).await?;
 

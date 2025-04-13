@@ -1,6 +1,8 @@
+use std::ops::Deref;
+
 // copy from ironbar: https://github.com/JakeStanger/ironbar/blob/master/src/clients/upower/dbus.rs
-use zbus::proxy;
 use zbus::zvariant::OwnedValue;
+use zbus::{Connection, proxy};
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, OwnedValue)]
 #[repr(u32)]
@@ -153,4 +155,21 @@ pub trait UPower {
     /// OnBattery property
     #[zbus(property)]
     fn on_battery(&self) -> zbus::Result<bool>;
+}
+
+#[derive(Debug)]
+pub struct Upower<'a>(UPowerProxy<'a>);
+
+impl<'a> Deref for Upower<'a> {
+    type Target = UPowerProxy<'a>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl<'a> Upower<'a> {
+    pub(crate) async fn new(connection: &'a Connection) -> zbus::Result<Self> {
+        UPowerProxy::new(connection).await.map(Self)
+    }
 }
