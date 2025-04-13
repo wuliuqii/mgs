@@ -11,6 +11,7 @@ futures-signals.workspace = true
 tracing.workspace = true
 itertools.workspace = true
 chrono.workspace = true
+hyprland.workspace = true
 
 [dev-dependencies]
 tokio.workspace = true

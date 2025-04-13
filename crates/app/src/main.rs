@@ -5,8 +5,7 @@ use ui::prelude::*;
 mod status_bar;
 mod widgets;
 
-#[tokio::main]
-async fn main() {
+fn main() {
     tracing_subscriber::fmt::init();
 
     let assets = Assets {};

@@ -25,9 +25,9 @@ impl Upower {
                 let subscriber = upower::Subscriber::new().await.unwrap();
 
                 cx.background_spawn({
-                    let client = subscriber.clone();
+                    let subscriber = subscriber.clone();
                     async move {
-                        client.run().await.unwrap();
+                        subscriber.run().await.unwrap();
                     }
                 })
                 .detach();
