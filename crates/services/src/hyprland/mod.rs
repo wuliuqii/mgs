@@ -3,6 +3,7 @@ use futures_signals::signal::{Mutable, MutableSignalCloned};
 use hyprland::dispatch::{Dispatch, DispatchType, WorkspaceIdentifierWithSpecial};
 use hyprland::event_listener::EventListener;
 use hyprland::shared::{HyprData, HyprDataActive};
+use tracing::error;
 
 #[derive(Debug, Clone)]
 pub struct Workspace {
@@ -58,12 +59,24 @@ pub struct Subscriber {
 
 impl Subscriber {
     pub async fn new() -> anyhow::Result<Self> {
-        Ok(Self {
-            data: Mutable::new(WorkspacesData::init()?),
-        })
+        // call run
+        let data = Mutable::new(WorkspacesData::init()?);
+        let sub = Self { data: data.clone() };
+
+        tokio::spawn({
+            let data = data.clone();
+            async move {
+                let subscriber = Subscriber { data };
+                let result = subscriber.run();
+                if let Err(e) = result {
+                    error!("Error in Subscriber: {:?}", e);
+                }
+            }
+        });
+        Ok(sub)
     }
 
-    pub fn run(&self) -> anyhow::Result<()> {
+    fn run(&self) -> anyhow::Result<()> {
         let mut event_listener = EventListener::new();
 
         {

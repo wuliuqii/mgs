@@ -21,3 +21,4 @@ tracing.workspace = true
 tracing-subscriber.workspace = true
 chrono.workspace = true
 hyprland.workspace = true
+tokio.workspace = true

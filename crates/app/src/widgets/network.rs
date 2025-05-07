@@ -4,7 +4,7 @@ use futures_signals::signal::SignalExt;
 use futures_util::StreamExt;
 
 use services::network::ActiveConnectionInfo::WiFi;
-use tracing::{debug, error};
+use tracing::error;
 use ui::prelude::*;
 
 #[allow(dead_code)]
@@ -38,13 +38,6 @@ impl NetworkWidget {
                 let mut subscriber = network::Subscriber::new().await.unwrap();
                 // todo: move to config
                 subscriber.set_refresh_rate_ms(5000);
-                cx.background_spawn({
-                    let client = subscriber.clone();
-                    async move {
-                        client.run().await.unwrap();
-                    }
-                })
-                .detach();
 
                 let mut signal = subscriber.subscribe().to_stream();
                 while let Some(data) = signal.next().await {
@@ -62,8 +55,6 @@ impl NetworkWidget {
     }
 
     fn update(&mut self, data: &network::NetworkData) {
-        debug!("Network data updated: {:?}", data);
-
         if !data.wifi_enabled {
             self.state = State::Offline;
             // todo: need more icons
@@ -123,6 +114,8 @@ impl Render for NetworkWidget {
                 elm.text_size(px(9.)).child(
                     div()
                         .v_flex()
+                        .w_16()
+                        .text_center()
                         .child(self.tx_speed.to_string())
                         .child(self.rx_speed.to_string()),
                 )

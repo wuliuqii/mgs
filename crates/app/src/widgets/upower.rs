@@ -24,14 +24,6 @@ impl Upower {
             cx.spawn(async move |this: WeakEntity<Self>, cx: &mut AsyncApp| {
                 let subscriber = upower::Subscriber::new().await.unwrap();
 
-                cx.background_spawn({
-                    let subscriber = subscriber.clone();
-                    async move {
-                        subscriber.run().await.unwrap();
-                    }
-                })
-                .detach();
-
                 let mut signal = subscriber.subscribe().to_stream();
                 while let Some(data) = signal.next().await {
                     this.update(cx, |this: &mut Self, cx| {
@@ -50,6 +42,7 @@ impl Upower {
     fn update(&mut self, properties: &UpowerData) {
         self.label = format!("{}", properties.percentage);
         self.status = properties.state;
+        self.icon_color = None;
         self.icon_path = match properties.state {
             BatteryState::FullyCharged | BatteryState::Charging | BatteryState::PendingCharge => {
                 "icons/battery-charging.svg"
@@ -77,10 +70,12 @@ impl Upower {
 impl Render for Upower {
     fn render(&mut self, _window: &mut Window, _cx: &mut Context<Self>) -> impl IntoElement {
         h_flex()
+            .gap_1()
             .child(
                 Icon::new(self.icon_path.clone())
+                    .size(20.)
                     .when_some(self.icon_color, |this, color| this.color(color)),
             )
-            .child(self.label.to_string())
+            .child(div().text_center().child(self.label.to_string()))
     }
 }

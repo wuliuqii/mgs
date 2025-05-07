@@ -12,6 +12,6 @@ tracing.workspace = true
 itertools.workspace = true
 chrono.workspace = true
 hyprland.workspace = true
-
-[dev-dependencies]
 tokio.workspace = true
+
+libpulse-binding = "2.30.1"

@@ -30,6 +30,7 @@ pub trait Device {
     fn disconnect(&self) -> zbus::Result<()>;
 
     /// GetAppliedConnection method
+    #[allow(clippy::type_complexity)]
     fn get_applied_connection(
         &self,
         flags: u32,

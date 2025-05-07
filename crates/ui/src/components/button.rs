@@ -1,9 +1,9 @@
 use std::sync::Arc;
 
-use gpui::{
-    div, prelude::FluentBuilder, px, rgb, App, InteractiveElement, IntoElement, MouseButton,
-    MouseDownEvent, ParentElement, RenderOnce, Rgba, SharedString, Styled, Window,
-};
+use gpui::prelude::*;
+use gpui::*;
+
+type ButtonCallback = dyn Fn(MouseDownEvent, &mut Window, &mut App) + 'static;
 
 #[derive(IntoElement)]
 pub struct Button {
@@ -14,7 +14,7 @@ pub struct Button {
     hover_bg: Option<Rgba>,
     label: SharedString,
     border_color: Option<Rgba>,
-    on_click: Arc<dyn Fn(MouseDownEvent, &mut Window, &mut App) + 'static>,
+    on_click: Arc<ButtonCallback>,
 }
 
 impl Button {}
@@ -73,7 +73,7 @@ impl Button {
     where
         F: Fn(MouseDownEvent, &mut Window, &mut App) + 'static,
     {
-        self.on_click = Arc::new(callback);
+        self.on_click = Arc::new(callback) as Arc<ButtonCallback>;
         self
     }
 }

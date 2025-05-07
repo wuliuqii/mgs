@@ -2,7 +2,7 @@ use anyhow::Ok;
 use futures_signals::signal::{Mutable, MutableSignalCloned};
 use futures_util::StreamExt;
 use futures_util::stream::select_all;
-use tracing::{debug, info};
+use tracing::{error, info};
 use zbus::Connection;
 use zbus::zvariant::{ObjectPath, OwnedObjectPath};
 
@@ -151,6 +151,19 @@ impl Subscriber {
         let conn = Connection::system().await?;
         let data = Mutable::new(NetworkData::init(&conn).await?);
 
+        let data_for_task = data.clone();
+        let conn_for_task = conn.clone();
+        tokio::spawn(async move {
+            let subscriber = Self {
+                data: data_for_task,
+                conn: conn_for_task,
+                refresh_rate_ms: 1000,
+            };
+            if let Err(e) = subscriber.run().await {
+                error!("Error in NetworkManager subscriber: {:?}", e);
+            }
+        });
+
         Ok(Self {
             data,
             conn,
@@ -162,7 +175,7 @@ impl Subscriber {
         self.refresh_rate_ms = refresh_rate_ms;
     }
 
-    pub async fn run(&self) -> anyhow::Result<()> {
+    async fn run(&self) -> anyhow::Result<()> {
         info!("NetworkManager subscriber start");
 
         let nm = NetworkManager::new(&self.conn).await?;
@@ -173,7 +186,6 @@ impl Subscriber {
             .then(|v| async move {
                 let value = v.get().await.unwrap_or_default();
 
-                debug!("WiFi enabled changed: {}", value);
                 self.data.lock_mut().wifi_enabled = value;
             })
             .boxed();
@@ -184,7 +196,6 @@ impl Subscriber {
             .then(|val| async move {
                 let value = val.get().await.unwrap_or_default().into();
 
-                debug!("Connectivity changed: {:?}", value);
                 self.data.lock_mut().connectivity = value;
             })
             .boxed();
@@ -196,7 +207,6 @@ impl Subscriber {
                 let nm = NetworkManager::new(&self.conn).await.unwrap();
                 let value = nm.active_connections().await.unwrap_or_default();
 
-                debug!("Active connections changed: {:?}", value);
                 self.data.lock_mut().active_connections = value;
             })
             .boxed();
@@ -220,7 +230,6 @@ impl Subscriber {
                         async move {
                             let value = val.get().await.unwrap_or_default();
 
-                            debug!("Strength changed value: {}, {}", &ssid, value);
                             {
                                 let mut data = self.data.lock_mut();
                                 if let Some(ap) = data
@@ -270,7 +279,6 @@ impl Subscriber {
                         let device_str = device_clone.clone();
                         async move {
                             let value = val.get().await.unwrap_or_default();
-                            debug!("Rx bytes changed value: {}", value);
                             let mut data = self.data.lock_mut();
                             for stat in data.network_statistics.iter_mut() {
                                 if stat.device == device_str {
@@ -293,7 +301,6 @@ impl Subscriber {
                         let device_str = device_string.clone();
                         async move {
                             let value = val.get().await.unwrap_or_default();
-                            debug!("Tx bytes changed value: {}", value);
                             let mut data = self.data.lock_mut();
                             for stat in data.network_statistics.iter_mut() {
                                 if stat.device == device_str {
@@ -323,7 +330,7 @@ impl Subscriber {
             events.push(stream);
         }
 
-        while let Some(_) = events.next().await {}
+        while (events.next().await).is_some() {}
 
         Ok(())
     }

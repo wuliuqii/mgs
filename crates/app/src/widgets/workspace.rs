@@ -21,14 +21,6 @@ impl Workspaces {
             cx.spawn(async move |this: WeakEntity<Self>, cx: &mut AsyncApp| {
                 let subscriber = hyprland::Subscriber::new().await.unwrap();
 
-                cx.background_spawn({
-                    let subscriber = subscriber.clone();
-                    async move {
-                        subscriber.run().unwrap();
-                    }
-                })
-                .detach();
-
                 let mut signal = subscriber.subscribe().to_stream();
                 while let Some(data) = signal.next().await {
                     this.update(cx, |this: &mut Self, cx| {
@@ -69,7 +61,7 @@ impl Render for Workspaces {
             workspaces
                 .into_iter()
                 .filter(|w| w.visible)
-                .map(|w| workspace_button(w)),
+                .map(workspace_button),
         )
     }
 }

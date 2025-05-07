@@ -54,10 +54,21 @@ impl Subscriber {
         let data = UpowerData::init(&conn).await?;
         let data = Mutable::new(data);
 
+        let conn_for_task = conn.clone();
+        let data_for_task = data.clone();
+
+        tokio::spawn(async move {
+            let sub = Self {
+                data: data_for_task,
+                conn: conn_for_task,
+            };
+            sub.run().await.unwrap();
+        });
+
         Ok(Self { data, conn })
     }
 
-    pub async fn run(&self) -> anyhow::Result<()> {
+    async fn run(&self) -> anyhow::Result<()> {
         info!("Upower subscriber start");
 
         let upower = Upower::new(&self.conn).await?;
@@ -113,7 +124,7 @@ impl Subscriber {
 
         let mut events = select_all(vec![percentages, states, time_to_full, time_to_empty]);
 
-        while let Some(_) = events.next().await {}
+        while (events.next().await).is_some() {}
 
         Ok(())
     }

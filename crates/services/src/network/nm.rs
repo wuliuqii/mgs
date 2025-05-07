@@ -56,14 +56,14 @@ impl<'a> NetworkManager<'a> {
                     continue;
                 }
 
-                let device_proxy = DeviceProxy::builder(&self.inner().connection())
+                let device_proxy = DeviceProxy::builder(self.inner().connection())
                     .path(device)?
                     .build()
                     .await?;
 
                 match device_proxy.device_type().await.map(DeviceType::from).ok() {
                     Some(DeviceType::Ethernet) => {
-                        let wired_device = WiredDeviceProxy::builder(&self.inner().connection())
+                        let wired_device = WiredDeviceProxy::builder(self.inner().connection())
                             .path(device_proxy.inner().path())?
                             .build()
                             .await?;
@@ -75,17 +75,16 @@ impl<'a> NetworkManager<'a> {
                     }
                     Some(DeviceType::Wifi) => {
                         let wireless_device =
-                            WirelessDeviceProxy::builder(&self.inner().connection())
+                            WirelessDeviceProxy::builder(self.inner().connection())
                                 .path(device_proxy.inner().path())?
                                 .build()
                                 .await?;
 
                         if let Ok(access_point) = wireless_device.active_access_point().await {
-                            let access_point =
-                                AccessPointProxy::builder(&self.inner().connection())
-                                    .path(access_point)?
-                                    .build()
-                                    .await?;
+                            let access_point = AccessPointProxy::builder(self.inner().connection())
+                                .path(access_point)?
+                                .build()
+                                .await?;
 
                             info.push(ActiveConnectionInfo::WiFi {
                                 id: connection.id().await?,
@@ -123,7 +122,7 @@ impl<'a> NetworkManager<'a> {
         let devices = self.devices().await?;
         let mut wireless_devices = Vec::new();
         for device in devices {
-            let device_proxy = DeviceProxy::builder(&self.inner().connection())
+            let device_proxy = DeviceProxy::builder(self.inner().connection())
                 .path(&device)?
                 .build()
                 .await?;
@@ -143,7 +142,7 @@ impl<'a> NetworkManager<'a> {
         let devices = self.devices().await?;
         let mut network_statistics = Vec::new();
         for device in devices {
-            let device_proxy = DeviceProxy::builder(&self.inner().connection())
+            let device_proxy = DeviceProxy::builder(self.inner().connection())
                 .path(&device)?
                 .build()
                 .await?;
@@ -152,7 +151,7 @@ impl<'a> NetworkManager<'a> {
                 device_proxy.device_type().await.map(DeviceType::from),
                 Ok(DeviceType::Wifi)
             ) {
-                let staticstics_proxy = StatisticsProxy::builder(&self.inner().connection())
+                let staticstics_proxy = StatisticsProxy::builder(self.inner().connection())
                     .path(&device)?
                     .build()
                     .await?;

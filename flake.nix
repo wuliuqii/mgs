@@ -57,6 +57,7 @@
                 wayland
                 vulkan-loader
                 freetype
+                libpulseaudio
               ];
 
               LD_LIBRARY_PATH = "${lib.makeLibraryPath buildInputs}";
