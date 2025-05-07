@@ -9,10 +9,10 @@
   };
 
   outputs =
-    {
-      self,
-      nixpkgs,
-      rust-overlay,
+    { self
+    , nixpkgs
+    , rust-overlay
+    ,
     }:
     let
       overlays = [
@@ -54,6 +54,7 @@
                 fontconfig
                 libxkbcommon
                 xorg.libxcb
+                xorg.libX11
                 wayland
                 vulkan-loader
                 freetype
