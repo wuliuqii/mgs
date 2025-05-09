@@ -6,66 +6,55 @@
       url = "github:oxalica/rust-overlay";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    crane.url = "github:ipetkov/crane";
   };
 
   outputs =
-    { self
-    , nixpkgs
-    , rust-overlay
-    ,
+    {
+      self,
+      crane,
+      nixpkgs,
+      rust-overlay,
     }:
     let
-      overlays = [
-        rust-overlay.overlays.default
-        (final: prev: {
-          rustToolchain = prev.rust-bin.fromRustupToolchainFile ./rust-toolchain.toml;
-        })
-      ];
       supportedSystems = [
         "x86_64-linux"
         "aarch64-linux"
       ];
-      eachSystem =
-        f:
-        nixpkgs.lib.genAttrs supportedSystems (
-          system:
-          f {
-            pkgs = import nixpkgs { inherit overlays system; };
-          }
-        );
+
+      forAllSystems =
+        f: nixpkgs.lib.genAttrs supportedSystems (system: f nixpkgs.legacyPackages.${system});
+
+      mkMgs =
+        pkgs:
+        let
+          rustBin = rust-overlay.lib.mkRustBin { } pkgs;
+        in
+        pkgs.callPackage ./nix/build.nix {
+          crane = crane.mkLib pkgs;
+          rustToolchain = rustBin.fromRustupToolchainFile ./rust-toolchain.toml;
+        };
+
+      mkDevShell =
+        pkgs:
+        let
+          rustBin = rust-overlay.lib.mkRustBin { } pkgs;
+        in
+        pkgs.callPackage ./nix/shell.nix {
+          rustToolchain = rustBin.fromRustupToolchainFile ./rust-toolchain.toml;
+        };
+
     in
     {
-      devShells = eachSystem (
-        { pkgs }:
-        {
-          default = pkgs.mkShell (
-            with pkgs;
-            rec {
-              packages = [
-                rustToolchain
-              ];
 
-              nativeBuildInputs = [
-                pkg-config
-              ];
+      packages = forAllSystems (pkgs: rec {
+        default = mkMgs pkgs;
+        debug = default.override { profile = "dev"; };
+      });
 
-              buildInputs = [
-                openssl
-                fontconfig
-                libxkbcommon
-                xorg.libxcb
-                xorg.libX11
-                wayland
-                vulkan-loader
-                freetype
-                libpulseaudio
-              ];
-
-              LD_LIBRARY_PATH = "${lib.makeLibraryPath buildInputs}";
-              RUST_SRC_PATH = "${rustToolchain}/lib/rustlib/src/rust/library";
-            }
-          );
-        }
-      );
+      devShells = forAllSystems (pkgs: {
+        default = mkDevShell pkgs;
+      });
     };
 }
