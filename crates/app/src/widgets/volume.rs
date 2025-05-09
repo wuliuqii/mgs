@@ -42,7 +42,7 @@ impl Volume {
                     SliderEvent::Change(value) => {
                         debug!("Volume changed to {}", value);
 
-                        state.client.set_sink_volume("52", *value);
+                        state.client.set_sink_volume(&state.sink_name, *value);
                     }
                 },
             )
@@ -60,7 +60,7 @@ impl Volume {
                             cx.update_entity(&this, |state, cx| {
                                 state.volume = sink.volume;
                                 state.muted = sink.muted;
-                                state.sink_name = sink.name;
+                                state.sink_name = sink.index.to_string();
                                 cx.update_entity(&state.slider, |slider, cx| {
                                     slider.set_value(sink.volume, cx);
                                 });
