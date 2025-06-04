@@ -2,6 +2,7 @@ use gpui::{AnyView, FontWeight, IntoElement, ParentElement, Render, Styled, px, 
 use ui::{Context, h_flex, prelude::Window};
 
 use crate::widgets::network::NetworkWidget;
+use crate::widgets::sysinfo::SysInfoWidget;
 use crate::widgets::volume::Volume;
 use crate::widgets::{clock::Clock, upower::Upower, workspace::Workspaces};
 
@@ -49,9 +50,16 @@ impl StatusBar {
         let workspaces = Workspaces::new(cx).clone();
         let network = NetworkWidget::new(cx).clone();
         let volume = Volume::new(cx).clone();
+        let sysinfo = SysInfoWidget::new(cx).clone();
         Self {
             left_items: vec![workspaces.into()],
-            right_items: vec![network.into(), volume.into(), upower.into(), clock.into()],
+            right_items: vec![
+                network.into(),
+                sysinfo.into(),
+                volume.into(),
+                upower.into(),
+                clock.into(),
+            ],
         }
     }
 }
